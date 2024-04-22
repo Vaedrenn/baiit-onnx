@@ -1,3 +1,5 @@
 numpy==1.26.4
 Pillow==10.2.0
 PyQt5==5.15.10
+onnxruntime-gpu
+pytest~=7.4.0
