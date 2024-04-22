@@ -3,9 +3,10 @@ from __future__ import annotations
 import os
 
 import onnxruntime as rt
+from onnxruntime import InferenceSession
 
 
-def load_model(model_path: str | os.path) -> rt.InferenceSession:
+def load_model(model_path: str | os.path) -> InferenceSession | None:
     """
     Loads models model_path, should be called before using predict
     :param model_path: file name
