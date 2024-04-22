@@ -51,12 +51,13 @@ def load_labels(model_path: str | os.path, filename: str, categories: dict) -> d
     try:
         tags_df = pd.read_csv(tag_path)
         tags = tags_df["name"]
-        tag_names = tags.tolist()
+        all_tags = tags.tolist()
 
         for category_name, category_number in categories.items():
             index = list(np.where(tags_df["category"] == category_number)[0])
-            labels [category_name] = index
+            labels[category_name] = index
 
+        labels['tags'] = all_tags
     except (FileNotFoundError, IOError, OSError, PermissionError) as file_error:
         print(f"Error reading labels file: {file_error}")
         return {}
