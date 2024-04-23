@@ -3,3 +3,4 @@ Pillow==10.2.0
 PyQt5==5.15.10
 onnxruntime-gpu
 pytest~=7.4.0
+pandas~=2.2.2
