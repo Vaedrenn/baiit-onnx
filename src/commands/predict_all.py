@@ -17,6 +17,7 @@ class Runnable(QRunnable):
     :param size: dimensions to resize to
     :param preprocessed_images: return array
     """
+
     def __init__(self, image_path, size, preprocessed_images):
 
         super().__init__()
@@ -52,6 +53,8 @@ class Runnable(QRunnable):
             image_array = image_array[:, :, ::-1]
 
             image_array = np.expand_dims(image_array, axis=0)
+
+            # shape needs to be 4 dims
 
             self.preprocessed_images.append((self.image_path, image_array))
 
@@ -104,16 +107,18 @@ def predict(
     try:
         # Make a prediction using the model
         input_name = model.get_inputs()[0].name
-        print("Input Node Name:", input_name)
 
-        label_name = model.get_outputs()[0].name
-        print("Output Node Name:", label_name)
+        output_node = model.get_outputs()[0].name  # Onnx can output to different nodes, we only want the end output
 
-        print("Shape of Input Data (image):", image.shape)  # Print the shape of the input data
+        probs = model.run([output_node], {input_name: image})[0]
 
-        probs = model.run([label_name], {input_name: image})[0]
+        # assign probs to tag names
+        labels = list(zip(labels["tags"], probs[0].astype(float)))  # labels[tags] is the list of all tags
 
-        labels = list(zip(labels[0], probs[0].astype(float)))  # labels[0] is the list of all tags
+        ret_thing = {}
+
+
+        return labels
 
 
     # unprocessed image
@@ -126,12 +131,11 @@ def predict(
         return None
 
 
-
 if __name__ == '__main__':
     path = r"C:\Users\khei\PycharmProjects\models\wd-vit-tagger-v3"
     model = load_model(path)
     test_dict = {"rating": 9, "general": 0, "characters": 4}
-    t = load_labels(path, "selected_tags.csv", test_dict)
+    labels = load_labels(path, "selected_tags.csv", test_dict)
 
     image_path = r'C:\Users\khei\PycharmProjects\baiit-onnx\tests\images\1670120513144187.png'
     # Model only supports 3 channels
@@ -147,7 +151,7 @@ if __name__ == '__main__':
     padded_image.paste(image, (pad_left, pad_top))
 
     _, height, width, _ = model.get_inputs()[0].shape
-    size = (height, width)    # Resize
+    size = (height, width)  # Resize
 
     if max_dim != size:
         padded_image = padded_image.resize(
@@ -163,4 +167,6 @@ if __name__ == '__main__':
 
     image_array = np.expand_dims(image_array, axis=0)
 
-    predict(model, test_dict, image_array)
+    ape = predict(model, labels, image_array)
+
+    print(ape)

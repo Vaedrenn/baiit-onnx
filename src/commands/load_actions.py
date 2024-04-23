@@ -48,7 +48,7 @@ def load_labels(model_path: str | os.path, filename: str, categories: dict) -> d
         # Default path name
         tag_path = os.path.join(model_path, "selected_tags.csv")
 
-    labels = OrderedDict()
+    labels = {}
     try:
         tags_df = pd.read_csv(tag_path)
         tags = tags_df["name"]
@@ -62,7 +62,6 @@ def load_labels(model_path: str | os.path, filename: str, categories: dict) -> d
     except (FileNotFoundError, IOError, OSError, PermissionError) as file_error:
         print(f"Error reading labels file: {file_error}")
         return {}
-
     return labels
 
 
