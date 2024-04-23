@@ -51,6 +51,8 @@ class Runnable(QRunnable):
             # Convert PIL-native RGB to BGR
             image_array = image_array[:, :, ::-1]
 
+            image_array = np.expand_dims(image_array, axis=0)
+
             self.preprocessed_images.append((self.image_path, image_array))
 
         except Exception as e:
@@ -102,12 +104,17 @@ def predict(
     try:
         # Make a prediction using the model
         input_name = model.get_inputs()[0].name
-        print(input_name)
+        print("Input Node Name:", input_name)
+
         label_name = model.get_outputs()[0].name
-        print(label_name)
+        print("Output Node Name:", label_name)
+
+        print("Shape of Input Data (image):", image.shape)  # Print the shape of the input data
+
         probs = model.run([label_name], {input_name: image})[0]
 
         labels = list(zip(labels[0], probs[0].astype(float)))  # labels[0] is the list of all tags
+
 
     # unprocessed image
     except TypeError:
@@ -153,5 +160,7 @@ if __name__ == '__main__':
 
     # Convert PIL-native RGB to BGR
     image_array = image_array[:, :, ::-1]
+
+    image_array = np.expand_dims(image_array, axis=0)
 
     predict(model, test_dict, image_array)
