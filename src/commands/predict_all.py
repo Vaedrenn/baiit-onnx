@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from collections import OrderedDict
-from typing import Any
+from typing import Any, Dict, List
 import onnxruntime as rt
 import numpy as np
 from PIL import Image
@@ -91,16 +91,14 @@ def predict(
         model: rt.InferenceSession,
         labels: dict,
         image: np.ndarray,
-        score_threshold: float = 0.5,
-        char_threshold: float = 0.85
-) -> tuple[dict[str, float], dict[str, float], dict[str, float], dict[str, float], str] | None:
+        thresholds: dict
+) -> dict[Any, list[list[Any] | Any]] | None:
     """
     Predicts tags for the image given the model and tags.
     :param model: model to use
-    :param labels: {"category":[2,3,4,5], "category":[2,3,4,5]}
+    :param labels: {"category":[indexes], "category":[2,3,4,5]}
     :param image: processed image
-    :param score_threshold: general tags, if the probability of the prediction is greater than this number add to tags
-    :param char_threshold: character tags, see above
+    :param thresholds: {"category": threshold float, "general" : 0.5}
     :return: None if there are no tags within threshold otherwise returns:
     list
     """
@@ -113,13 +111,17 @@ def predict(
         probs = model.run([output_node], {input_name: image})[0]
 
         # assign probs to tag names
-        labels = list(zip(labels["tags"], probs[0].astype(float)))  # labels[tags] is the list of all tags
+        tag_names = list(zip(labels["tags"], probs[0].astype(float)))  # labels[tags] is the list of all tags
 
         ret_thing = {}
 
-
-        return labels
-
+        labels.pop('tags')
+        for category, indexes in labels.items():
+            # {category: [(tag, float)], 'rating':[('general', 0.43), ('sensitive', 0.63), ('questionable', 0.01)]
+            # Get all names from indexes if it is in index
+            tag_probs = [tag_names[i] for i in indexes if tag_names[i][1] > thresholds[category]]
+            ret_thing[category] = tag_probs
+        return ret_thing
 
     # unprocessed image
     except TypeError:
@@ -135,6 +137,7 @@ if __name__ == '__main__':
     path = r"C:\Users\khei\PycharmProjects\models\wd-vit-tagger-v3"
     model = load_model(path)
     test_dict = {"rating": 9, "general": 0, "characters": 4}
+    thresh_dict = {"rating": 0.0, "general": 0.5, "characters": 0.85}
     labels = load_labels(path, "selected_tags.csv", test_dict)
 
     image_path = r'C:\Users\khei\PycharmProjects\baiit-onnx\tests\images\1670120513144187.png'
@@ -156,7 +159,7 @@ if __name__ == '__main__':
     if max_dim != size:
         padded_image = padded_image.resize(
             size,
-            Image.LANCZOS,
+            Image.BICUBIC,
         )
 
     # Convert to numpy array
@@ -167,6 +170,7 @@ if __name__ == '__main__':
 
     image_array = np.expand_dims(image_array, axis=0)
 
-    ape = predict(model, labels, image_array)
+    ape = predict(model, labels, image_array, thresh_dict)
 
-    print(ape)
+    for k, v in ape.items():
+        print(k, v)

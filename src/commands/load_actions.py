@@ -42,7 +42,6 @@ def load_labels(model_path: str | os.path, filename: str, categories: dict) -> d
     :return: list of tags(labels)
     """
     tag_path = os.path.join(model_path, filename)
-    print(tag_path)
 
     if not os.path.exists(tag_path):
         # Default path name
