@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from collections import OrderedDict
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 import onnxruntime as rt
 import numpy as np
 from PIL import Image
@@ -42,7 +42,7 @@ class Runnable(QRunnable):
             # Resize
             if max_dim != self.size:
                 padded_image = padded_image.resize(
-                    (self.size, self.size),
+                    self.size,
                     Image.LANCZOS,
                 )
 
@@ -59,7 +59,7 @@ class Runnable(QRunnable):
             self.preprocessed_images.append((self.image_path, image_array))
 
         except Exception as e:
-            print(f"Error processing {self.image_path}: {e}")
+            print(f"Runnable Error processing {self.image_path}: {e}")
 
 
 def process_images_from_directory(model: rt.InferenceSession, directory: str | os.path) -> list[(str, np.ndarray)]:
@@ -90,8 +90,8 @@ def process_images_from_directory(model: rt.InferenceSession, directory: str | o
 def predict(
         model: rt.InferenceSession,
         labels: dict,
-        image: np.ndarray,
-        thresholds: dict
+        thresholds: dict,
+        image: np.ndarray
 ) -> dict[Any, list[list[Any] | Any]] | None:
     """
     Predicts tags for the image given the model and tags.
@@ -110,17 +110,18 @@ def predict(
 
         probs = model.run([output_node], {input_name: image})[0]
 
+
         # assign probs to tag names
         tag_names = list(zip(labels["tags"], probs[0].astype(float)))  # labels[tags] is the list of all tags
 
         ret_thing = {}
 
-        labels.pop('tags')
         for category, indexes in labels.items():
             # {category: [(tag, float)], 'rating':[('general', 0.43), ('sensitive', 0.63), ('questionable', 0.01)]
             # Get all names from indexes if it is in index
-            tag_probs = [tag_names[i] for i in indexes if tag_names[i][1] > thresholds[category]]
-            ret_thing[category] = tag_probs
+            if category != 'tags':
+                tag_probs = [tag_names[i] for i in indexes if tag_names[i][1] > thresholds[category]]
+                ret_thing[category] = tag_probs
         return ret_thing
 
     # unprocessed image
@@ -133,7 +134,33 @@ def predict(
         return None
 
 
-if __name__ == '__main__':
+def predict_all(model: rt.InferenceSession,
+                labels: dict,
+                thresholds: dict,
+                directory: str | os.path
+                ) -> list[tuple[Any, dict[Any, list[list[Any] | Any]]]] | None:
+    """
+    Calls process_images_from_directory and predict on all images in the folder
+    :param thresholds: kv pair of category names and thresholds{"rating": 0.0, "general": 0.5, "characters": 0.85}
+    :param model: model to use
+    :param labels: {"category":[indexes], "category":[2,3,4,5]}
+    :param directory: folder to process
+    :return: None if there are no tags within threshold otherwise returns:
+
+    """
+    images = process_images_from_directory(model, directory)
+    processed_images = []
+    for image in images:
+        result = predict(model, labels, thresholds, image[1])
+        if result is not None:
+            processed_images.append((image[0], result))
+    if processed_images is not None:
+        return processed_images
+    else:
+        print("No results")
+        return None
+
+def tet_predict():
     path = r"C:\Users\khei\PycharmProjects\models\wd-vit-tagger-v3"
     model = load_model(path)
     test_dict = {"rating": 9, "general": 0, "characters": 4}
@@ -170,7 +197,24 @@ if __name__ == '__main__':
 
     image_array = np.expand_dims(image_array, axis=0)
 
-    ape = predict(model, labels, image_array, thresh_dict)
+    ape = predict(model, labels, thresh_dict, image_array)
 
     for k, v in ape.items():
         print(k, v)
+
+
+def tet_predict_all():
+    path = r"C:\Users\khei\PycharmProjects\models\wd-vit-tagger-v3"
+    model = load_model(path)
+    test_dict = {"rating": 9, "general": 0, "characters": 4}
+    thresh_dict = {"rating": 0.0, "general": 0.5, "characters": 0.85}
+    labels = load_labels(path, "selected_tags.csv", test_dict)
+    img_path = r"C:\Users\khei\PycharmProjects\baiit-onnx\tests\images"
+
+    results = predict_all(model, labels, thresh_dict, img_path)
+    for r in results:
+        print(r)
+
+if __name__ == '__main__':
+    # test_predict()
+    tet_predict_all()
