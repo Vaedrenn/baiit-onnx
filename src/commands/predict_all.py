@@ -110,7 +110,6 @@ def predict(
 
         probs = model.run([output_node], {input_name: image})[0]
 
-
         # assign probs to tag names
         tag_names = list(zip(labels["tags"], probs[0].astype(float)))  # labels[tags] is the list of all tags
 
@@ -160,8 +159,11 @@ def predict_all(model: rt.InferenceSession,
         print("No results")
         return None
 
-def tet_predict():
+
+def test_predict():
     path = r"C:\Users\khei\PycharmProjects\models\wd-vit-tagger-v3"
+    sess_options = rt.SessionOptions()
+    sess_options.enable_profiling = True
     model = load_model(path)
     test_dict = {"rating": 9, "general": 0, "characters": 4}
     thresh_dict = {"rating": 0.0, "general": 0.5, "characters": 0.85}
@@ -203,18 +205,22 @@ def tet_predict():
         print(k, v)
 
 
-def tet_predict_all():
+def test_predict_all():
     path = r"C:\Users\khei\PycharmProjects\models\wd-vit-tagger-v3"
     model = load_model(path)
+    print(rt.get_device())
+    print(rt.cuda_version)
     test_dict = {"rating": 9, "general": 0, "characters": 4}
     thresh_dict = {"rating": 0.0, "general": 0.5, "characters": 0.85}
     labels = load_labels(path, "selected_tags.csv", test_dict)
     img_path = r"C:\Users\khei\PycharmProjects\baiit-onnx\tests\images"
+    img_path = r"C:\Users\khei\Pictures\x0x0x"
 
     results = predict_all(model, labels, thresh_dict, img_path)
     for r in results:
         print(r)
 
+
 if __name__ == '__main__':
     # test_predict()
-    tet_predict_all()
+    test_predict_all()
