@@ -162,8 +162,6 @@ def predict_all(model: rt.InferenceSession,
 
 def test_predict():
     path = r"C:\Users\khei\PycharmProjects\models\wd-vit-tagger-v3"
-    sess_options = rt.SessionOptions()
-    sess_options.enable_profiling = True
     model = load_model(path)
     test_dict = {"rating": 9, "general": 0, "characters": 4}
     thresh_dict = {"rating": 0.0, "general": 0.5, "characters": 0.85}
@@ -209,7 +207,6 @@ def test_predict_all():
     path = r"C:\Users\khei\PycharmProjects\models\wd-vit-tagger-v3"
     model = load_model(path)
     print(rt.get_device())
-    print(rt.cuda_version)
     test_dict = {"rating": 9, "general": 0, "characters": 4}
     thresh_dict = {"rating": 0.0, "general": 0.5, "characters": 0.85}
     labels = load_labels(path, "selected_tags.csv", test_dict)

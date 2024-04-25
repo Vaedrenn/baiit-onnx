@@ -22,7 +22,11 @@ def load_model(model_path: str | os.path) -> InferenceSession | None:
 
     try:
         print("Loading model")
-        model = rt.InferenceSession(path, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+
+        model = rt.InferenceSession(path,
+                                    providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+                                    )
+        print(rt.cuda_version)
     except FileNotFoundError as file_not_found_error:
         print("Model file not found:", file_not_found_error)
         return None

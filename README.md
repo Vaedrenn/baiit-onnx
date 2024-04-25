@@ -1,6 +1,5 @@
 # Bulk AI Image Classification Tool
 
-# ABYSMALLY SLOW DON'T USE
 
 Bulk image tagger for onnx runtime 
 
