@@ -1,6 +1,6 @@
 numpy==1.26.4
 Pillow==10.2.0
 PyQt5==5.15.10
-onnxruntime-gpu
+onnxruntime-gpu @ https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
 pytest~=7.4.0
 pandas~=2.2.2
